@@ -3,6 +3,7 @@ services:
   - type: web
     name: courselens-api
     runtime: node
+    region: frankfurt # same region as the MongoDB Atlas cluster
     rootDir: server
     plan: free
     buildCommand: npm ci --omit=dev
