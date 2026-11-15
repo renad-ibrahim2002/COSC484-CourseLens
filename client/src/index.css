@@ -1,0 +1,116 @@
+@import 'tailwindcss';
+@import '@fontsource/figtree/400.css';
+@import '@fontsource/figtree/500.css';
+@import '@fontsource/figtree/600.css';
+@import '@fontsource/figtree/700.css';
+@import '@fontsource-variable/bricolage-grotesque/opsz.css';
+
+/* Design tokens taken from the CourseLens hi-fi wireframes (Figma). */
+@theme {
+  --font-sans: 'Figtree', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque Variable', 'Figtree', ui-sans-serif, sans-serif;
+
+  --color-page: #f6f5f1;
+  --color-line: #e2e0d9;
+  --color-field: #c9cdd6;
+  --color-ink: #15171c;
+  --color-muted: #555b66;
+  --color-subtle: #7a808b;
+  --color-brand: #2a4bd7;
+  --color-brand-hover: #2340bd;
+  --color-brand-soft: #e8ecfc;
+  --color-brand-ink: #1c3399;
+  --color-danger: #c2361f;
+  --color-danger-soft: #fbe7e3;
+  --color-danger-ink: #9c2a18;
+  --color-success-soft: #e2f2ea;
+  --color-success-ink: #17694c;
+  --color-success: #1f8a62;
+  --color-warn-soft: #fcefd9;
+  --color-warn-ink: #8a5300;
+  --color-chip: #efede7;
+  --color-chip-ink: #3d424b;
+  --color-dark: #15171c;
+  --color-dark-line: #2c2f36;
+
+  --shadow-float: 0 16px 40px 0 rgba(20, 23, 28, 0.09);
+  --shadow-tab: 0 1px 3px rgba(20, 23, 28, 0.12);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-page font-sans text-ink antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  .font-display {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+  }
+  :focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--color-brand) 55%, transparent);
+    outline-offset: 2px;
+  }
+  button,
+  [role='button'] {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  ::placeholder {
+    color: var(--color-subtle);
+    opacity: 1;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-line bg-white;
+  }
+  .input {
+    @apply h-11 w-full rounded-[10px] border border-field bg-white px-3 text-[15px] text-ink outline-none transition-colors placeholder:text-subtle focus:border-brand focus:ring-3 focus:ring-brand/15 disabled:bg-page disabled:text-muted;
+  }
+  .input[aria-invalid='true'] {
+    @apply border-danger focus:ring-danger/15;
+  }
+  .label {
+    @apply text-sm font-semibold text-ink;
+  }
+  .link {
+    @apply text-brand hover:underline;
+  }
+  .eyebrow {
+    @apply text-xs font-bold tracking-[0.08em] uppercase;
+  }
+  .container-page {
+    @apply mx-auto w-full max-w-[1280px] px-5 sm:px-8 lg:px-20;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #ecebe6 25%, #f3f2ee 37%, #ecebe6 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 8px;
+}
+@keyframes shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
