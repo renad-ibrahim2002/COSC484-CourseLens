@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  server:
+    name: API lint and tests
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: server } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: server/package-lock.json }
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+
+  client:
+    name: Client lint, unit tests and build
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: client } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: client/package-lock.json }
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  e2e:
+    name: End-to-end (Playwright)
+    runs-on: ubuntu-latest
+    needs: [server, client]
+    services:
+      mongo:
+        image: mongo:8
+        ports: ['27017:27017']
+    env:
+      MONGODB_URI: mongodb://127.0.0.1:27017/courselens
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+        working-directory: server
+      - run: npm run seed
+        working-directory: server
+      - run: npm start &
+        working-directory: server
+      - run: npm ci && npx playwright install --with-deps chromium
+        working-directory: client
+      - run: npx wait-on -t 60000 http://localhost:4000/api/health
+        working-directory: client
+      - run: npx playwright test
+        working-directory: client
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: playwright-report, path: client/playwright-report, retention-days: 7 }

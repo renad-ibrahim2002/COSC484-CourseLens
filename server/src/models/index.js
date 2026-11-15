@@ -1,0 +1,17 @@
+module.exports = {
+  User: require('./User'),
+  University: require('./University'),
+  Major: require('./Major'),
+  Course: require('./Course'),
+  Review: require('./Review'),
+  MidtermRating: require('./MidtermRating'),
+  Resource: require('./Resource'),
+  Vote: require('./Vote'),
+  Bookmark: require('./Bookmark'),
+  Report: require('./Report'),
+  AuditLog: require('./AuditLog'),
+  CourseSuggestion: require('./CourseSuggestion'),
+  UniversitySuggestion: require('./UniversitySuggestion'),
+  Token: require('./Token'),
+  Counter: require('./Counter'),
+};
