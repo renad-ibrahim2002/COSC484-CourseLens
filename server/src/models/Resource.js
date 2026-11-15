@@ -17,7 +17,7 @@ const resourceSchema = new Schema(
     // Either a file or a written text tip.
     file: {
       key: String, // storage key (local file name or Cloudinary public id)
-      provider: { type: String, enum: ['local', 'cloudinary'] },
+      provider: { type: String, enum: ['local', 'cloudinary', 'gridfs'] },
       format: { type: String, enum: ['pdf', 'docx', 'png', 'jpg'] },
       sizeBytes: Number,
       pages: Number,

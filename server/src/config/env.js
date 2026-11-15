@@ -33,6 +33,10 @@ const env = {
   maxUploadBytes: 10 * 1024 * 1024,
   resendApiKey: process.env.RESEND_API_KEY || '',
   emailFrom: process.env.EMAIL_FROM || 'CourseLens <no-reply@courselens.app>',
+  // 'gridfs' or 'local'; defaults to GridFS in production and the local disk in development.
+  storage: process.env.STORAGE || '',
+  // Seed the demo catalog on start-up, but only if the database has no universities yet.
+  seedIfEmpty: process.env.SEED_IF_EMPTY === 'true',
   cloudinaryUrl: process.env.CLOUDINARY_URL || '',
   cloudinaryFolder: process.env.CLOUDINARY_FOLDER || 'courselens/dev',
   trustProxy: process.env.TRUST_PROXY ? Number(process.env.TRUST_PROXY) : isProd ? 1 : 0,

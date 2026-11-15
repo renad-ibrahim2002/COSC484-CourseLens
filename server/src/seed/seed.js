@@ -68,8 +68,8 @@ const GENERIC_TEXTS = [
   '',
 ];
 
-async function seed() {
-  await connect();
+async function seed({ keepConnection = false } = {}) {
+  if (!keepConnection) await connect();
   console.log(`Seeding ${env.mongoUri.replace(/\/\/.*@/, '//***@')}`);
   await mongoose.connection.dropDatabase();
   await Promise.all(Object.values(M).map((Model) => Model.syncIndexes?.()));

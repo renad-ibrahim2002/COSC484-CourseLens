@@ -1,5 +1,4 @@
 const express = require('express');
-const fs = require('fs');
 const { z } = require('zod');
 const mongoose = require('mongoose');
 const { Resource, Course, Major, Vote, Bookmark } = require('../models');
@@ -274,24 +273,27 @@ const MIME = {
   jpg: 'image/jpeg',
   docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 };
-files.get('/:token', (req, res, next) => {
-  let payload;
-  try {
-    payload = storage.verifyLocalToken(req.params.token);
-  } catch {
-    return next(new HttpError(410, 'This link has expired. Go back and try again.'));
-  }
-  const filePath = storage.localPath(payload.k);
-  if (!fs.existsSync(filePath)) return next(notFound('File'));
-  res.setHeader('Content-Type', MIME[payload.f] || 'application/octet-stream');
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('Cache-Control', 'private, max-age=300');
-  // Files are served as downloads or inside a sandbox so they cannot run scripts on our origin.
-  res.setHeader('Content-Security-Policy', "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox");
-  res.setHeader('Cross-Origin-Resource-Policy', 'same-site');
-  const disp = payload.d === 'inline' && payload.f !== 'docx' ? 'inline' : 'attachment';
-  res.setHeader('Content-Disposition', `${disp}; filename="${String(payload.n).replace(/"/g, '')}"`);
-  return fs.createReadStream(filePath).pipe(res);
-});
+files.get(
+  '/:token',
+  asyncHandler(async (req, res) => {
+    let payload;
+    try {
+      payload = storage.verifyLocalToken(req.params.token);
+    } catch {
+      throw new HttpError(410, 'This link has expired. Go back and try again.');
+    }
+    const stream = await storage.openStream(payload);
+    if (!stream) throw notFound('File');
+    res.setHeader('Content-Type', MIME[payload.f] || 'application/octet-stream');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'private, max-age=300');
+    // Files are served as downloads or inside a sandbox so they cannot run scripts on our origin.
+    res.setHeader('Content-Security-Policy', "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox");
+    res.setHeader('Cross-Origin-Resource-Policy', 'same-site');
+    const disp = payload.d === 'inline' && payload.f !== 'docx' ? 'inline' : 'attachment';
+    res.setHeader('Content-Disposition', `${disp}; filename="${String(payload.n).replace(/"/g, '')}"`);
+    stream.on('error', () => res.destroy()).pipe(res);
+  }),
+);
 
 module.exports = { resources: router, files };

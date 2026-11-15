@@ -17,6 +17,12 @@ services:
         value: '22'
       - key: TRUST_PROXY
         value: '2'
+      # Loads the demo catalog on first start; does nothing once the database has data.
+      - key: SEED_IF_EMPTY
+        value: 'true'
+      # Files are kept in MongoDB GridFS unless CLOUDINARY_URL is set (Render's free disk is wiped on restart).
+      - key: STORAGE
+        value: gridfs
       - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET

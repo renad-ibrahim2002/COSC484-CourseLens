@@ -48,7 +48,7 @@ npm run dev:web     # http://localhost:5173
 
 Open http://localhost:5173.
 
-**No email or file-storage accounts are needed for local development.** Without `RESEND_API_KEY` the API prints emails to its console and the "Check your inbox" page shows a development link to open the verification email. Without `CLOUDINARY_URL` uploaded files are stored in `server/uploads/` and served through short-lived signed links.
+**No email or file-storage accounts are needed for local development.** Without `RESEND_API_KEY` the API prints emails to its console and the "Check your inbox" page shows a development link to open the verification email. Without `CLOUDINARY_URL` uploaded files are stored in `server/uploads/` (development) or MongoDB GridFS (production) and served through short-lived signed links.
 
 ## Demo accounts
 
@@ -207,10 +207,11 @@ Audit results (Lighthouse, axe, responsive checks) are recorded in [docs/QUALITY
 Planned public URL: **https://courselens.vercel.app** (frontend) with the API on Render.
 
 1. **MongoDB Atlas** – create a free M0 cluster, a database user with read/write on one database, and allow Render's outbound IPs (or `0.0.0.0/0` for the free tier). Copy the connection string.
-2. **Render (API)** – *New → Blueprint* and select this repository; `render.yaml` creates `courselens-api` from `/server`. Enter `MONGODB_URI` (and optionally `RESEND_API_KEY`, `EMAIL_FROM`, `CLOUDINARY_URL`). JWT secrets are generated automatically. Then run the seed once from the Render shell: `npm run seed`.
+2. **Render (API)** – *New → Blueprint* and select this repository; `render.yaml` creates `courselens-api` from `/server`. Enter `MONGODB_URI` (and optionally `RESEND_API_KEY`, `EMAIL_FROM`, `CLOUDINARY_URL`). JWT secrets are generated automatically. The demo data is loaded automatically on first start (see step 6).
 3. **Vercel (client)** – import the repository with **Root Directory `client`**. If your Render URL differs from `https://courselens-api.onrender.com`, update the `/api` rewrite in `client/vercel.json`. Set `CLIENT_URL` on Render to the final Vercel URL.
 4. **Email (optional)** – verify a sending domain in Resend and set `RESEND_API_KEY` and `EMAIL_FROM`. Without it, production sign-ups cannot receive verification emails, so set it before the demo.
-5. **Files (optional but recommended)** – set `CLOUDINARY_URL` so uploads survive Render restarts (Render's free disk is temporary).
+5. **Files** – in production uploads are stored in MongoDB GridFS by default, so they survive Render restarts (its free disk is wiped). Set `CLOUDINARY_URL` to use Cloudinary instead.
+6. **First start** – with `SEED_IF_EMPTY=true` (set in `render.yaml`) the API loads the AUBH catalog and demo data the first time it starts on an empty database, and never again once data exists.
 
 GitHub Actions runs lint, unit/integration tests, the build and the Playwright suite on every push and pull request; Vercel and Render deploy `main` automatically.
 
