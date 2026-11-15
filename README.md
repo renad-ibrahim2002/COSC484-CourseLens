@@ -204,7 +204,7 @@ Audit results (Lighthouse, axe, responsive checks) are recorded in [docs/QUALITY
 
 ## Deployment
 
-Planned public URL: **https://courselens.vercel.app** (frontend) with the API on Render.
+Planned public URL: **https://courselens-gamma.vercel.app** (frontend) with the API on Render.
 
 1. **MongoDB Atlas** – create a free M0 cluster, a database user with read/write on one database, and allow Render's outbound IPs (or `0.0.0.0/0` for the free tier). Copy the connection string.
 2. **Render (API)** – *New → Blueprint* and select this repository; `render.yaml` creates `courselens-api` from `/server`. Enter `MONGODB_URI` (and optionally `RESEND_API_KEY`, `EMAIL_FROM`, `CLOUDINARY_URL`). JWT secrets are generated automatically. The demo data is loaded automatically on first start (see step 6).
