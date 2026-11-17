@@ -377,7 +377,7 @@ async function seed({ keepConnection = false } = {}) {
     flagReason: 'Automatic check: this review may name an instructor.',
     createdAt: ago(0, 2),
   });
-  const busiAuthor = reviewers.find((u) => majorName.get(String(u.majorId)) === 'Business Administration');
+  const busiAuthor = reviewers.find((u) => majorName.get(String(u.majorId)) === 'Business Administration (Management)');
   const reportedBusi = await placeReview({
     courseId: courses['ENGL 205']._id,
     universityId: aubh._id,
