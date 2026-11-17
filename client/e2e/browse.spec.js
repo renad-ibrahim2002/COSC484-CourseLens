@@ -6,7 +6,7 @@ test('a guest finds a course and reads its ratings in three clicks (NFR-04)', as
   await page.getByRole('button', { name: 'Show courses' }).click(); // 1
   await expect(page.getByRole('heading', { name: 'Computer Science courses' })).toBeVisible();
   await page.getByRole('link', { name: /COSC 101/ }).click(); // 2
-  await expect(page.getByRole('heading', { name: 'Introduction to Programming' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Introduction to Computing' })).toBeVisible();
   await expect(page.getByLabel('Overall rating')).toContainText('/ 5');
   await expect(page.getByRole('meter', { name: 'Difficulty' }).first()).toBeVisible();
 });

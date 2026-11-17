@@ -15,6 +15,7 @@ const storage = require('../services/storage');
 const { recalculateCourse } = require('../services/ratings');
 const { termOf } = require('../utils/semesters');
 const { makePdf, makeDocx, makePng } = require('./files');
+const { UNIVERSITIES } = require('./catalog');
 
 const DEMO_PASSWORD = 'CourseLens1';
 const DAY = 86400000;
@@ -74,117 +75,34 @@ async function seed({ keepConnection = false } = {}) {
   await mongoose.connection.dropDatabase();
   await Promise.all(Object.values(M).map((Model) => Model.syncIndexes?.()));
 
-  /* ---------- Universities & majors ---------- */
-  const aubh = await M.University.create({
-    name: 'American University of Bahrain',
-    shortName: 'AUBH',
-    location: 'Riffa, Bahrain',
-    emailDomains: ['aubh.edu.bh'],
-    status: 'active',
-  });
-  await M.University.create([
-    {
-      name: 'University of Bahrain',
-      shortName: 'UOB',
-      location: 'Sakhir, Bahrain',
-      emailDomains: ['uob.edu.bh', 'stu.uob.edu.bh'],
-      status: 'coming_soon',
-    },
-    {
-      name: 'Bahrain Polytechnic',
-      shortName: 'BP',
-      location: 'Isa Town, Bahrain',
-      emailDomains: ['polytechnic.bh'],
-      status: 'coming_soon',
-    },
-  ]);
-  const majorDefs = [
-    ['COSC', 'Computer Science'],
-    ['COEN', 'Computer Engineering'],
-    ['BUSI', 'Business Administration'],
-    ['INTD', 'Interior Design'],
-    ['GRDS', 'Graphic Design'],
-    ['ACCT', 'Accounting & Finance'],
-  ];
-  const majors = {};
-  for (const [code, name] of majorDefs) majors[code] = await M.Major.create({ universityId: aubh._id, code, name });
-
-  /* ---------- Courses ---------- */
-  const courseDefs = [
-    [
-      'COSC 101',
-      'Introduction to Programming',
-      ['COSC', 'COEN'],
-      'Problem solving and programming fundamentals in Python: variables, control flow, functions and simple data structures.',
-    ],
-    ['COSC 220', 'Data Structures', ['COSC', 'COEN'], 'Lists, stacks, queues, trees, hash tables and graphs, with complexity analysis.'],
-    [
-      'COSC 230',
-      'Computer Organization',
-      ['COSC', 'COEN'],
-      'How computers execute programs: data representation, assembly, memory and the CPU.',
-    ],
-    ['COSC 310', 'Algorithms', ['COSC'], 'Design and analysis of algorithms: divide and conquer, greedy methods and dynamic programming.'],
-    ['COSC 330', 'Database Systems', ['COSC', 'COEN'], 'Relational modelling, SQL, normalisation, indexing and transactions.'],
-    ['COSC 350', 'Operating Systems', ['COSC', 'COEN'], 'Processes, threads, scheduling, memory management and file systems.'],
-    ['COSC 360', 'Computer Networks', ['COSC', 'COEN'], 'Network layers, TCP/IP, routing, HTTP and network security basics.'],
-    ['COSC 380', 'Artificial Intelligence', ['COSC'], 'Search, knowledge representation, machine learning basics and ethics of AI.'],
-    ['COSC 420', 'Cybersecurity', ['COSC'], 'Threats, cryptography, secure coding and incident response.'],
-    ['COSC 450', 'Capstone Project I', ['COSC'], 'First half of the senior project: requirements, design and a working prototype.'],
-    ['COSC 451', 'Capstone Project II', ['COSC'], 'Second half of the senior project: implementation, testing and final presentation.'],
-    ['COSC 470', 'Software Engineering', ['COSC', 'COEN'], 'Agile processes, requirements, design patterns, testing and team projects.'],
-    [
-      'COSC 484',
-      'Web Engineering',
-      ['COSC'],
-      'Full-stack web application development: front-end frameworks, REST APIs, databases, authentication, testing and deployment.',
-    ],
-    ['MATH 201', 'Discrete Mathematics', ['COSC', 'COEN'], 'Logic, proofs, sets, relations, combinatorics and graphs.'],
-    ['COEN 210', 'Digital Logic Design', ['COEN'], 'Boolean algebra, combinational and sequential circuits.'],
-    ['COEN 320', 'Embedded Systems', ['COEN'], 'Microcontrollers, interfacing and real-time programming.'],
-    ['COEN 330', 'Signals and Systems', ['COEN'], 'Continuous and discrete signals, Fourier analysis and filters.'],
-    ['BUSI 101', 'Principles of Management', ['BUSI'], 'Planning, organising, leading and controlling in organisations.'],
-    ['BUSI 210', 'Business Communication', ['BUSI'], 'Professional writing, presentations and workplace communication.'],
-    ['BUSI 250', 'Marketing Fundamentals', ['BUSI'], 'Markets, consumers and the marketing mix.'],
-    ['BUSI 310', 'Organisational Behaviour', ['BUSI'], 'Motivation, teams, leadership and culture at work.'],
-    ['BUSI 330', 'Operations Management', ['BUSI'], 'Processes, quality, supply chains and capacity planning.'],
-    ['BUSI 360', 'Business Law', ['BUSI'], 'Contracts, companies and commercial law in Bahrain and the GCC.'],
-    ['BUSI 420', 'Strategic Management', ['BUSI'], 'Competitive strategy and the capstone business case.'],
-    ['ACCT 201', 'Financial Accounting', ['ACCT', 'BUSI'], 'Recording transactions and preparing financial statements.'],
-    ['ACCT 202', 'Managerial Accounting', ['ACCT', 'BUSI'], 'Costing, budgeting and decision making.'],
-    ['ACCT 310', 'Intermediate Accounting', ['ACCT'], 'IFRS reporting for assets, liabilities and equity.'],
-    ['ACCT 320', 'Corporate Finance', ['ACCT'], 'Time value of money, valuation and capital budgeting.'],
-    ['ACCT 340', 'Auditing', ['ACCT'], 'Audit planning, evidence and reporting.'],
-    ['ACCT 410', 'Islamic Finance', ['ACCT'], 'Principles and instruments of Islamic banking and finance.'],
-    ['INTD 101', 'Design Studio I', ['INTD', 'GRDS'], 'Foundations of two- and three-dimensional design.'],
-    ['INTD 210', 'Interior Materials', ['INTD'], 'Finishes, furniture and sustainable materials.'],
-    ['INTD 220', 'Space Planning', ['INTD'], 'Planning residential and commercial interiors.'],
-    ['INTD 310', 'Interior Studio III', ['INTD'], 'Hospitality and retail design projects.'],
-    ['INTD 320', 'Building Codes', ['INTD'], 'Safety, accessibility and code compliance for interiors.'],
-    ['GRDS 110', 'Typography I', ['GRDS'], 'Letterforms, hierarchy and layout.'],
-    ['GRDS 210', 'Visual Identity', ['GRDS'], 'Logos, identity systems and brand guidelines.'],
-    ['GRDS 230', 'Digital Illustration', ['GRDS'], 'Vector and raster illustration techniques.'],
-    ['GRDS 320', 'UX/UI Design', ['GRDS'], 'User research, wireframes, prototyping and usability testing.'],
-    ['GRDS 330', 'Motion Graphics', ['GRDS'], 'Animation principles and motion design tools.'],
-    ['GRDS 410', 'Portfolio Studio', ['GRDS'], 'Preparing a professional design portfolio.'],
-    ['ENGL 101', 'Academic Writing', ['BUSI', 'INTD', 'GRDS', 'ACCT'], 'Academic reading, argument and research writing.'],
-  ];
-  const courses = {};
-  for (const [code, title, majorCodes, description] of courseDefs) {
-    courses[code] = await M.Course.create({
-      universityId: aubh._id,
-      majorIds: majorCodes.map((c) => majors[c]._id),
-      code,
-      title,
-      description,
-      credits: 3,
-    });
+  /* ---------- Universities, majors & courses (real catalogs, see ./catalog.js) ---------- */
+  let aubh;
+  let majors = {};
+  let courses = {};
+  for (const def of UNIVERSITIES) {
+    const uni = await M.University.create(def.university);
+    const uniMajors = {};
+    for (const [code, name] of def.majors) uniMajors[code] = await M.Major.create({ universityId: uni._id, code, name });
+    const uniCourses = {};
+    for (const [code, title, majorCodes, description = '', credits = 3] of def.courses) {
+      uniCourses[code] = await M.Course.create({
+        universityId: uni._id,
+        majorIds: majorCodes.map((c) => uniMajors[c]._id),
+        code,
+        title,
+        description,
+        credits,
+      });
+    }
+    // The demo accounts and sample content belong to the first university (AUBH).
+    if (!aubh) [aubh, majors, courses] = [uni, uniMajors, uniCourses];
   }
-  courses['COSC 290'] = await M.Course.create({
+  // Web Engineering is listed as COSC 485 in the AUBH catalog but runs as COSC 484 this year.
+  courses['COSC 485'] = await M.Course.create({
     universityId: aubh._id,
     majorIds: [majors.COSC._id],
-    code: 'COSC 290',
-    title: 'Visual Basic (old catalog)',
+    code: 'COSC 485',
+    title: 'Web Engineering (catalog code)',
     credits: 3,
     status: 'archived',
   });
@@ -206,17 +124,17 @@ async function seed({ keepConnection = false } = {}) {
   const renad = await mk('Renad Ibrahim', 'student@aubh.edu.bh', 'COSC', 'moderator');
   const talal = await mk('Talal AlHamer', 'student2@aubh.edu.bh', 'COSC');
   const admin = await mk('Platform administrator', 'admin@aubh.edu.bh', null, 'admin');
-  const modB = await mk('Maryam Hasan', 'moderator2@aubh.edu.bh', 'BUSI', 'moderator');
+  const modB = await mk('Maryam Hasan', 'moderator2@aubh.edu.bh', 'MGMT', 'moderator');
   await M.User.create({
     name: 'Yusuf Ali',
     email: 'yusuf.ali@aubh.edu.bh',
     passwordHash: hash,
     universityId: aubh._id,
-    majorId: majors.COEN._id,
+    majorId: majors.CMPE._id,
     isVerified: false,
   });
 
-  const majorCycle = ['COSC', 'COSC', 'COSC', 'COEN', 'COSC', 'COEN', 'BUSI', 'ACCT', 'GRDS', 'INTD'];
+  const majorCycle = ['COSC', 'COSC', 'COSC', 'CMPE', 'COSC', 'CMPE', 'MGMT', 'FINC', 'MGMT', 'FINC'];
   const reviewers = [];
   for (let i = 1; i <= 80; i += 1) {
     reviewers.push(
@@ -303,9 +221,9 @@ async function seed({ keepConnection = false } = {}) {
     {
       overall: shuffle([1, 2, 2, 3, 3, 3, 3, ...Array(12).fill(4), ...Array(15).fill(5)]),
       recs: {
-        takeBefore: { 'COSC 330': 20, 'COSC 220': 13, 'COSC 101': 6 },
-        takeTogether: { 'MATH 201': 9, 'COSC 360': 5 },
-        avoidTogether: { 'COSC 470': 16, 'COSC 450': 8 },
+        takeBefore: { 'COSC 312': 20, 'COSC 125': 13, 'COSC 101': 6 },
+        takeTogether: { 'MATH 203': 9, 'CMPE 215': 5 },
+        avoidTogether: { 'SWEN 360': 16, 'COSC 499A': 8 },
       },
     },
   );
@@ -316,7 +234,7 @@ async function seed({ keepConnection = false } = {}) {
       semester: 'Spring 2026',
       ratings: { difficulty: 4, workload: 5, usefulness: 5, fairness: 4, overall: 5 },
       text: 'The group project is the whole course, so pick your partner early and start the backend in week 9. Weekly labs map straight onto the project. Easily the most useful course for internships.',
-      recs: { takeBefore: ['COSC 330'], takeTogether: [], avoidTogether: ['COSC 470'] },
+      recs: { takeBefore: ['COSC 312'], takeTogether: [], avoidTogether: ['SWEN 360'] },
       helpful: 24,
       at: ago(150),
     },
@@ -364,49 +282,49 @@ async function seed({ keepConnection = false } = {}) {
     'COSC 101',
     61,
     { difficulty: 2.2, workload: 2.8, usefulness: 4.3, fairness: 4.4, overall: 4.4 },
-    { recs: { takeTogether: { 'MATH 201': 12 } } },
+    { recs: { takeTogether: { 'MATH 203': 12 } } },
   );
   await seedCourseReviews(
-    'COSC 220',
+    'COSC 125',
     51,
     { difficulty: 4.3, workload: 4.1, usefulness: 4.5, fairness: 3.8, overall: 3.8 },
-    { recs: { takeBefore: { 'COSC 101': 30, 'MATH 201': 18 }, avoidTogether: { 'COSC 310': 9 } } },
+    { recs: { takeBefore: { 'COSC 101': 30, 'MATH 203': 18 }, avoidTogether: { 'COSC 248': 9 } } },
   );
   await seedCourseReviews(
-    'COSC 330',
+    'COSC 312',
     30,
     { difficulty: 3.4, workload: 3.3, usefulness: 4.4, fairness: 4.0, overall: 4.0 },
-    { recs: { takeBefore: { 'COSC 220': 14 }, takeTogether: { 'COSC 484': 6 } } },
+    { recs: { takeBefore: { 'COSC 125': 14 }, takeTogether: { 'COSC 484': 6 } } },
   );
   await seedCourseReviews(
-    'COSC 470',
+    'SWEN 360',
     26,
     { difficulty: 3.8, workload: 4.9, usefulness: 4.3, fairness: 3.7, overall: 3.9 },
-    { recs: { avoidTogether: { 'COSC 450': 11, 'COSC 484': 7 } } },
+    { recs: { avoidTogether: { 'COSC 499A': 11, 'COSC 484': 7 } } },
   );
-  await seedCourseReviews('MATH 201', 43, { difficulty: 4.0, workload: 3.4, usefulness: 3.6, fairness: 3.5, overall: 3.5 });
-  await seedCourseReviews('COSC 360', 19, { difficulty: 3.4, workload: 3.2, usefulness: 4.2, fairness: 4.1, overall: 4.1 });
-  await seedCourseReviews('COSC 310', 22, { difficulty: 4.5, workload: 4.0, usefulness: 4.4, fairness: 3.6, overall: 3.7 });
-  await seedCourseReviews('COSC 350', 14, { difficulty: 3.9, workload: 3.8, usefulness: 4.0, fairness: 3.9, overall: 3.8 });
-  await seedCourseReviews('COSC 230', 12, { difficulty: 3.6, workload: 3.1, usefulness: 3.4, fairness: 4.0, overall: 3.6 });
-  await seedCourseReviews('COSC 380', 10, { difficulty: 3.7, workload: 3.6, usefulness: 4.6, fairness: 4.1, overall: 4.3 });
-  await seedCourseReviews('COSC 420', 9, { difficulty: 3.5, workload: 3.4, usefulness: 4.5, fairness: 4.2, overall: 4.2 });
-  await seedCourseReviews('COSC 450', 8, { difficulty: 3.3, workload: 4.6, usefulness: 4.4, fairness: 3.8, overall: 4.0 });
-  await seedCourseReviews('COEN 210', 18, { difficulty: 3.6, workload: 3.3, usefulness: 4.0, fairness: 4.1, overall: 4.0 });
-  await seedCourseReviews('BUSI 101', 40, { difficulty: 2.1, workload: 2.6, usefulness: 3.8, fairness: 4.2, overall: 4.0 });
-  await seedCourseReviews('BUSI 250', 25, { difficulty: 2.5, workload: 2.9, usefulness: 4.0, fairness: 4.0, overall: 4.1 });
-  await seedCourseReviews('ACCT 201', 34, { difficulty: 3.6, workload: 3.5, usefulness: 4.3, fairness: 3.9, overall: 3.9 });
-  await seedCourseReviews('GRDS 320', 20, { difficulty: 3.0, workload: 3.9, usefulness: 4.7, fairness: 4.2, overall: 4.5 });
-  await seedCourseReviews('INTD 220', 15, { difficulty: 3.4, workload: 4.4, usefulness: 4.1, fairness: 3.9, overall: 3.9 });
+  await seedCourseReviews('MATH 203', 43, { difficulty: 4.0, workload: 3.4, usefulness: 3.6, fairness: 3.5, overall: 3.5 });
+  await seedCourseReviews('CMPE 215', 19, { difficulty: 3.4, workload: 3.2, usefulness: 4.2, fairness: 4.1, overall: 4.1 });
+  await seedCourseReviews('COSC 248', 22, { difficulty: 4.5, workload: 4.0, usefulness: 4.4, fairness: 3.6, overall: 3.7 });
+  await seedCourseReviews('COSC 372', 14, { difficulty: 3.9, workload: 3.8, usefulness: 4.0, fairness: 3.9, overall: 3.8 });
+  await seedCourseReviews('CMPE 271', 12, { difficulty: 3.6, workload: 3.1, usefulness: 3.4, fairness: 4.0, overall: 3.6 });
+  await seedCourseReviews('DSAI 465', 10, { difficulty: 3.7, workload: 3.6, usefulness: 4.6, fairness: 4.1, overall: 4.3 });
+  await seedCourseReviews('CYBR 310', 9, { difficulty: 3.5, workload: 3.4, usefulness: 4.5, fairness: 4.2, overall: 4.2 });
+  await seedCourseReviews('COSC 499A', 8, { difficulty: 3.3, workload: 4.6, usefulness: 4.4, fairness: 3.8, overall: 4.0 });
+  await seedCourseReviews('CMPE 270', 18, { difficulty: 3.6, workload: 3.3, usefulness: 4.0, fairness: 4.1, overall: 4.0 });
+  await seedCourseReviews('MGMT 101', 40, { difficulty: 2.1, workload: 2.6, usefulness: 3.8, fairness: 4.2, overall: 4.0 });
+  await seedCourseReviews('MRKG 101', 25, { difficulty: 2.5, workload: 2.9, usefulness: 4.0, fairness: 4.0, overall: 4.1 });
+  await seedCourseReviews('ACCT 101', 34, { difficulty: 3.6, workload: 3.5, usefulness: 4.3, fairness: 3.9, overall: 3.9 });
+  await seedCourseReviews('MGMT 380', 20, { difficulty: 3.0, workload: 3.9, usefulness: 4.7, fairness: 4.2, overall: 4.5 });
+  await seedCourseReviews('FINC 231', 15, { difficulty: 3.4, workload: 4.4, usefulness: 4.1, fairness: 3.9, overall: 3.9 });
 
   // Renad's other reviews (My reviews wireframe)
   await M.Review.deleteMany({
     userId: renad._id,
-    courseId: { $in: [courses['COSC 330']._id, courses['MATH 201']._id] },
+    courseId: { $in: [courses['COSC 312']._id, courses['MATH 203']._id] },
     semester: 'Fall 2025',
   });
   const r330 = await placeReview({
-    courseId: courses['COSC 330']._id,
+    courseId: courses['COSC 312']._id,
     universityId: aubh._id,
     userId: renad._id,
     authorLabel: labelOf(renad),
@@ -418,7 +336,7 @@ async function seed({ keepConnection = false } = {}) {
   });
   await votesFor('review', r330._id, 9, renad._id);
   const rMath = await placeReview({
-    courseId: courses['MATH 201']._id,
+    courseId: courses['MATH 203']._id,
     universityId: aubh._id,
     userId: renad._id,
     authorLabel: labelOf(renad),
@@ -430,25 +348,25 @@ async function seed({ keepConnection = false } = {}) {
     createdAt: ago(255),
   });
 
-  // Bookmarked COSC 470 review (Bookmarks wireframe)
+  // Bookmarked SWEN 360 review (Bookmarks wireframe)
   const ceStudent = reviewers.filter((u) => majorName.get(String(u.majorId)) === 'Computer Engineering')[1];
-  await M.Review.deleteOne({ courseId: courses['COSC 470']._id, userId: ceStudent._id, semester: 'Spring 2026' });
+  await M.Review.deleteOne({ courseId: courses['SWEN 360']._id, userId: ceStudent._id, semester: 'Spring 2026' });
   const r470 = await placeReview({
-    courseId: courses['COSC 470']._id,
+    courseId: courses['SWEN 360']._id,
     universityId: aubh._id,
     userId: ceStudent._id,
     authorLabel: labelOf(ceStudent),
     semester: 'Spring 2026',
     ratings: { difficulty: 4, workload: 5, usefulness: 4, fairness: 4, overall: 4 },
     text: 'Do not take this with the capstone. The sprint reviews every two weeks are where most of the grade comes from.',
-    recommendations: { avoidTogether: [courses['COSC 450']._id] },
+    recommendations: { avoidTogether: [courses['COSC 499A']._id] },
     createdAt: ago(140),
   });
 
   /* ---------- Reported content (Moderation wireframes) ---------- */
   const mathReporter = reviewers.filter((u) => majorName.get(String(u.majorId)) === 'Computer Science')[7];
   const reportedMath = await placeReview({
-    courseId: courses['MATH 201']._id,
+    courseId: courses['MATH 203']._id,
     universityId: aubh._id,
     userId: mathReporter._id,
     authorLabel: labelOf(mathReporter),
@@ -461,7 +379,7 @@ async function seed({ keepConnection = false } = {}) {
   });
   const busiAuthor = reviewers.find((u) => majorName.get(String(u.majorId)) === 'Business Administration');
   const reportedBusi = await placeReview({
-    courseId: courses['BUSI 210']._id,
+    courseId: courses['ENGL 205']._id,
     universityId: aubh._id,
     userId: busiAuthor._id,
     authorLabel: labelOf(busiAuthor),
@@ -620,7 +538,7 @@ async function seed({ keepConnection = false } = {}) {
       text: kind === 'tip' ? `${title}. It makes the final weeks much calmer.` : undefined,
     });
   }
-  const normalise = await addResource('COSC 330', {
+  const normalise = await addResource('COSC 312', {
     uploader: renad,
     kind: 'tip',
     type: 'tips',
@@ -631,7 +549,7 @@ async function seed({ keepConnection = false } = {}) {
     helpful: 10,
     downloads: 0,
   });
-  const truth = await addResource('MATH 201', {
+  const truth = await addResource('MATH 203', {
     uploader: renad,
     kind: 'img',
     type: 'formula_sheet',
@@ -641,7 +559,7 @@ async function seed({ keepConnection = false } = {}) {
     status: 'hidden',
     downloads: 28,
   });
-  const examAnswers = await addResource('COSC 220', {
+  const examAnswers = await addResource('COSC 125', {
     kind: 'pdf',
     type: 'other',
     title: 'Final exam answers (scanned)',
@@ -651,13 +569,13 @@ async function seed({ keepConnection = false } = {}) {
   const week3 = await addResource('COSC 101', { kind: 'pdf', type: 'notes', title: 'Week 3 notes', tags: ['week3'], at: ago(1, 4) });
   for (const [code, list] of Object.entries({
     'COSC 101': ['Python basics cheat sheet', 'Loops and functions practice', 'Mid-term past paper notes'],
-    'COSC 220': ['Big-O cheat sheet', 'Tree traversal notes', 'Graph algorithms summary'],
-    'COSC 330': ['SQL joins one-pager', 'ER diagram examples'],
-    'MATH 201': ['Proof techniques guide', 'Combinatorics formulas'],
-    'COSC 470': ['Scrum roles summary', 'UML diagrams cheat sheet'],
-    'BUSI 101': ['Management theories summary'],
-    'ACCT 201': ['Journal entries practice'],
-    'GRDS 320': ['Usability testing checklist'],
+    'COSC 125': ['Big-O cheat sheet', 'Tree traversal notes', 'Graph algorithms summary'],
+    'COSC 312': ['SQL joins one-pager', 'ER diagram examples'],
+    'MATH 203': ['Proof techniques guide', 'Combinatorics formulas'],
+    'SWEN 360': ['Scrum roles summary', 'UML diagrams cheat sheet'],
+    'MGMT 101': ['Management theories summary'],
+    'ACCT 101': ['Journal entries practice'],
+    'MGMT 380': ['Gantt chart and WBS checklist'],
   })) {
     for (const title of list) {
       await addResource(code, {
@@ -692,7 +610,7 @@ async function seed({ keepConnection = false } = {}) {
       createdAt: ago(i < 3 ? 3 - i : 10 + i),
     });
   }
-  for (const code of ['COSC 470', 'COSC 360']) {
+  for (const code of ['SWEN 360', 'CMPE 215']) {
     await M.MidtermRating.create({
       courseId: courses[code]._id,
       universityId: aubh._id,
@@ -702,11 +620,11 @@ async function seed({ keepConnection = false } = {}) {
       section: 'Section 01',
       assessment: 'midterm',
       ratings: { pace: 4, workload: 4, clarity: 3, fairness: 4 },
-      comment: code === 'COSC 470' ? 'Sprint 2 is the busiest week; plan around it.' : '',
+      comment: code === 'SWEN 360' ? 'Sprint 2 is the busiest week; plan around it.' : '',
       createdAt: ago(6),
     });
   }
-  for (const code of ['COSC 220', 'COSC 330', 'MATH 201']) {
+  for (const code of ['COSC 125', 'COSC 312', 'MATH 203']) {
     const pool = shuffle(reviewers).slice(0, 6);
     for (const u of pool) {
       await M.MidtermRating.create({
@@ -752,7 +670,7 @@ async function seed({ keepConnection = false } = {}) {
   await report('resource', examAnswers, 'not_allowed', 'These are the real exam answers.', reviewers[23], ago(0, 5));
   await report('resource', examAnswers, 'not_allowed', '', reviewers[24], ago(0, 4));
   await report('review', reportedBusi, 'offensive', 'Not constructive.', reviewers[25], ago(1, 2));
-  await report('resource', week3, 'wrong_course', 'These are COSC 220 notes.', reviewers[26], ago(1, 1));
+  await report('resource', week3, 'wrong_course', 'These are COSC 125 notes.', reviewers[26], ago(1, 1));
   for (let i = 0; i < 4; i += 1)
     await report('review', reportedSpam, 'spam', i === 0 ? 'Selling notes.' : '', reviewers[27 + i], ago(2, 5 - i));
   await M.Counter.create({ _id: 'report', seq: 200 });
@@ -760,7 +678,7 @@ async function seed({ keepConnection = false } = {}) {
   // Moderation history + audit log (Moderation log and Statistics wireframes)
   const handled = [];
   for (let i = 0; i < 12; i += 1) {
-    const t = await addResource(i % 2 ? 'COSC 220' : 'COSC 101', {
+    const t = await addResource(i % 2 ? 'COSC 125' : 'COSC 101', {
       kind: 'pdf',
       type: 'other',
       title: `Removed upload ${i + 1}`,
@@ -776,7 +694,7 @@ async function seed({ keepConnection = false } = {}) {
   }
   for (let i = 0; i < 31; i += 1) {
     const target = (
-      await M.Review.find({ courseId: courses[['COSC 484', 'COSC 220', 'BUSI 101'][i % 3]]._id })
+      await M.Review.find({ courseId: courses[['COSC 484', 'COSC 125', 'MGMT 101'][i % 3]]._id })
         .skip(i)
         .limit(1)
     )[0];
@@ -808,39 +726,39 @@ async function seed({ keepConnection = false } = {}) {
     d.setHours(h, m, 0, 0);
     return d > new Date() ? ago(0, 1) : d;
   };
-  await log(admin, 'major_added', 'Accounting & Finance', '', ago(13), 'Added major', 'major');
+  await log(admin, 'major_added', 'Business Administration (Finance)', '', ago(13), 'Added major', 'major');
   await log(renad, 'dismissed', 'Resource on COSC 101', 'Correct course', ago(12), 'Dismissed reports on a resource', 'resource');
-  await log(modB, 'restored', 'Review on BUSI 210', 'Hidden by mistake', ago(1, 2), 'Restored a review');
-  await log(renad, 'hidden', 'Resource on COSC 220', 'Exam answers', ago(1, 4), 'Hid a resource', 'resource');
-  await log(admin, 'course_archived', 'COSC 290', '', ago(1, 5), 'Archived course', 'course');
+  await log(modB, 'restored', 'Review on ENGL 205', 'Hidden by mistake', ago(1, 2), 'Restored a review');
+  await log(renad, 'hidden', 'Resource on COSC 125', 'Exam answers', ago(1, 4), 'Hid a resource', 'resource');
+  await log(admin, 'course_archived', 'COSC 485', '', ago(1, 5), 'Archived course', 'course');
   await log(admin, 'role_changed', 'Renad Ibrahim', '', ago(1, 6), 'Changed role: Student → Moderator', 'user');
   await log(modB, 'dismissed', 'Review on COSC 484', 'Opinion, not abuse', today(9, 15), 'Dismissed reports on a review');
-  await log(renad, 'hidden', 'Review on MATH 201', 'Names an instructor', today(10, 42), 'Hid a review');
-  await log(admin, 'suggestion_approved', 'COSC 499', '', today(11, 2), 'Approved course suggestion', 'course');
+  await log(renad, 'hidden', 'Review on MATH 203', 'Names an instructor', today(10, 42), 'Hid a review');
+  await log(admin, 'suggestion_approved', 'COSC 415', '', today(11, 2), 'Approved course suggestion', 'course');
 
   /* ---------- Course suggestions ---------- */
   await M.CourseSuggestion.create([
     {
       universityId: aubh._id,
       majorId: majors.COSC._id,
-      code: 'COSC 499',
-      title: 'Special Topics in Computing',
+      code: 'COSC 486',
+      title: 'Mobile Programming',
       requestedBy: reviewers.slice(0, 5).map((u) => u._id),
       createdAt: ago(2),
     },
     {
       universityId: aubh._id,
-      majorId: majors.INTD._id,
-      code: 'INTD 330',
-      title: 'Lighting Design',
+      majorId: majors.FINC._id,
+      code: 'FINC 312',
+      title: 'International Finance',
       requestedBy: reviewers.slice(5, 7).map((u) => u._id),
       createdAt: ago(4),
     },
     {
       universityId: aubh._id,
-      majorId: majors.BUSI._id,
-      code: 'BUSI 415',
-      title: 'Entrepreneurship Lab',
+      majorId: majors.MGMT._id,
+      code: 'MGMT 305',
+      title: 'International Business',
       requestedBy: [reviewers[8]._id],
       createdAt: ago(7),
     },
@@ -859,8 +777,8 @@ async function seed({ keepConnection = false } = {}) {
   for (let i = 0; i < 4; i += 1) {
     await M.CourseSuggestion.create({
       universityId: aubh._id,
-      majorId: majors.BUSI._id,
-      code: `BUSI ${490 + i}`,
+      majorId: majors.MGMT._id,
+      code: `MGMT ${490 + i}`,
       title: `Duplicate request ${i + 1}`,
       status: 'rejected',
       requestedBy: [reviewers[i]._id],
@@ -870,8 +788,8 @@ async function seed({ keepConnection = false } = {}) {
 
   /* ---------- Bookmarks ---------- */
   await M.Bookmark.insertMany([
-    { userId: renad._id, targetType: 'course', targetId: courses['COSC 470']._id },
-    { userId: renad._id, targetType: 'course', targetId: courses['COSC 360']._id },
+    { userId: renad._id, targetType: 'course', targetId: courses['SWEN 360']._id },
+    { userId: renad._id, targetType: 'course', targetId: courses['CMPE 215']._id },
     { userId: renad._id, targetType: 'resource', targetId: expressCheat._id },
     { userId: renad._id, targetType: 'resource', targetId: midGuide._id },
     { userId: renad._id, targetType: 'resource', targetId: week9._id },

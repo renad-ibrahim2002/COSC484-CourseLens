@@ -21,7 +21,9 @@ function Picker() {
   const active = unis?.universities.filter((u) => u.status === 'active') || [];
   const [uni, setUni] = useState('');
   const [major, setMajor] = useState('');
-  const uniId = uni || user?.universityId || active[0]?.id || '';
+  // Guests start at the university with the most reviews, not the first one alphabetically.
+  const busiest = active.reduce((best, u) => (!best || u.reviewCount > best.reviewCount ? u : best), null);
+  const uniId = uni || user?.universityId || busiest?.id || '';
   const { data: majors } = useQuery({
     queryKey: ['majors', uniId],
     queryFn: () => get(`/universities/${uniId}/majors`, { sort: 'name' }),

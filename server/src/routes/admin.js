@@ -155,7 +155,7 @@ const courseBody = z.object({
   universityId: objectId,
   code: courseCode,
   title: z.string().trim().min(3, 'Enter a title').max(120),
-  credits: z.coerce.number().int().min(0).max(12).default(3),
+  credits: z.coerce.number().int().min(0).max(30).default(3),
   description: z.string().trim().max(600).default(''),
   majorIds: z.array(objectId).min(1, 'Choose at least one major').max(6),
   visible: z.boolean().default(true),
@@ -244,7 +244,7 @@ router.post(
     z.object({
       code: courseCode.optional(),
       title: z.string().trim().min(3).max(120).optional(),
-      credits: z.coerce.number().int().min(0).max(12).optional(),
+      credits: z.coerce.number().int().min(0).max(30).optional(),
     }),
   ),
   asyncHandler(async (req, res) => {

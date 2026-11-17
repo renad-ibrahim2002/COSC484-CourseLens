@@ -17,7 +17,7 @@ const courseSchema = new Schema(
     majorIds: [{ type: Schema.Types.ObjectId, ref: 'Major', index: true }],
     code: { type: String, required: true, trim: true, uppercase: true },
     title: { type: String, required: true, trim: true },
-    credits: { type: Number, min: 0, max: 12, default: 3 },
+    credits: { type: Number, min: 0, max: 30, default: 3 },
     description: { type: String, default: '', maxlength: 600 },
     level: { type: Number, default: 100 },
     status: { type: String, enum: ['active', 'archived'], default: 'active', index: true },

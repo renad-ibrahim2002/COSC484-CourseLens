@@ -47,7 +47,7 @@ export default function SuggestCourseModal({ open, onClose, majorId, majorName }
           </Field>
         </div>
         <Field label="Credits" id="sg-credits">
-          <Input id="sg-credits" type="number" min={0} max={12} className="w-24" {...register('credits', { valueAsNumber: true })} />
+          <Input id="sg-credits" type="number" min={0} max={30} className="w-24" {...register('credits', { valueAsNumber: true })} />
         </Field>
         <div className="flex justify-end gap-2.5">
           <Button variant="secondary" onClick={onClose}>

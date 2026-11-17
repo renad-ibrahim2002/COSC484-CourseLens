@@ -255,7 +255,7 @@ router.post(
         .toUpperCase()
         .regex(/^[A-Z]{2,5} ?\d{3}[A-Z]?$/, 'Use a code like COSC 499'),
       title: z.string().trim().min(3, 'Enter the course title').max(120),
-      credits: z.coerce.number().int().min(0).max(12).default(3),
+      credits: z.coerce.number().int().min(0).max(30).default(3),
     }),
   ),
   asyncHandler(async (req, res) => {

@@ -6,7 +6,7 @@ import os from 'os';
 
 test('write, see and delete a course review (UC-05, FR-13)', async ({ page }) => {
   await login(page, 'student2@aubh.edu.bh');
-  await openCourse(page, 'COSC 360');
+  await openCourse(page, 'CMPE 215');
   await page.getByRole('link', { name: 'Write a review' }).first().click();
   await page.getByLabel('Semester you took it').selectOption('Spring 2026');
   for (const [label, n] of [
@@ -20,15 +20,15 @@ test('write, see and delete a course review (UC-05, FR-13)', async ({ page }) =>
   }
   const text = `Subnetting takes practice; do every Packet Tracer lab. ${Date.now()}`;
   await page.getByLabel(/Your review/).fill(text);
-  await page.getByRole('combobox', { name: 'Take before this course' }).fill('COSC 220');
-  await page.getByRole('option', { name: /COSC 220/ }).click();
+  await page.getByRole('combobox', { name: 'Take before this course' }).fill('COSC 125');
+  await page.getByRole('option', { name: /COSC 125/ }).click();
   await page.getByRole('button', { name: 'Submit review' }).click();
   await expect(page).toHaveURL(/\/reviews$/);
   await page.getByLabel('Sort reviews').selectOption('newest');
   await expect(page.getByText(text)).toBeVisible();
 
   await page.goto('/me/reviews');
-  const card = page.locator('div.card', { hasText: 'COSC 360' }).first();
+  const card = page.locator('div.card', { hasText: 'CMPE 215' }).first();
   await card.getByRole('button', { name: 'Delete' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click();
   await expect(page.getByText('Deleted.')).toBeVisible();
@@ -36,7 +36,7 @@ test('write, see and delete a course review (UC-05, FR-13)', async ({ page }) =>
 
 test('a review that names an instructor is held for moderation', async ({ page }) => {
   await login(page, 's071@aubh.edu.bh');
-  await openCourse(page, 'COSC 230');
+  await openCourse(page, 'CMPE 271');
   await page
     .getByRole('link', { name: /Write a review|Edit your review/ })
     .first()
@@ -61,7 +61,7 @@ test('upload a PDF and find it with search and filters (UC-08, UC-09)', async ({
   await login(page, 'student2@aubh.edu.bh');
   await page.goto('/resources/upload');
   await page.getByRole('radio', { name: 'Formula sheet' }).click();
-  await page.getByLabel('Course', { exact: true }).selectOption({ label: 'COSC 330 · Database Systems' });
+  await page.getByLabel('Course', { exact: true }).selectOption({ label: 'COSC 312 · Design and Usage of Databases' });
   await page.getByLabel('Choose a file').setInputFiles(file);
   await expect(page.getByText(/Checked/)).toBeVisible();
   await page.getByLabel('Title', { exact: true }).fill(title);

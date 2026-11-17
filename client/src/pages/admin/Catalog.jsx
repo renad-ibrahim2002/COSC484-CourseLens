@@ -79,7 +79,7 @@ function CourseForm({ universityId, majors, course, defaultMajor, onDone, onCanc
             id="c-credits"
             type="number"
             min={0}
-            max={12}
+            max={30}
             className="h-10 text-sm"
             value={form.credits}
             onChange={(e) => set('credits', e.target.value)}
