@@ -6,6 +6,7 @@ import { get } from '../api/client';
 import { Button, Meter, Pill, Select, Skeleton } from '../components/ui';
 import { CourseCard } from '../components/CourseBits';
 import { useAuth } from '../lib/auth';
+import { defaultUniversity } from '../lib/universities';
 
 const FEATURES = [
   [Star, 'Course ratings', 'Difficulty, workload, usefulness and assessment fairness, scored by students who finished it.'],
@@ -21,9 +22,7 @@ function Picker() {
   const active = unis?.universities.filter((u) => u.status === 'active') || [];
   const [uni, setUni] = useState('');
   const [major, setMajor] = useState('');
-  // Guests start at the university with the most reviews, not the first one alphabetically.
-  const busiest = active.reduce((best, u) => (!best || u.reviewCount > best.reviewCount ? u : best), null);
-  const uniId = uni || user?.universityId || busiest?.id || '';
+  const uniId = uni || user?.universityId || defaultUniversity(active)?.id || '';
   const { data: majors } = useQuery({
     queryKey: ['majors', uniId],
     queryFn: () => get(`/universities/${uniId}/majors`, { sort: 'name' }),

@@ -22,6 +22,7 @@ import ResourceRow from '../../components/ResourceRow';
 import { useAuth } from '../../lib/auth';
 import { TYPE_LABELS, TYPE_ORDER } from '../../lib/format';
 import { FileText } from 'lucide-react';
+import { defaultUniversity } from '../../lib/universities';
 
 const FORMATS = [
   ['pdf', 'PDF'],
@@ -77,7 +78,7 @@ export default function ResourcesPage({ scoped }) {
   const unis = useQuery({ queryKey: ['universities'], queryFn: () => get('/universities') });
   const activeUnis = unis.data?.universities.filter((u) => u.status === 'active') || [];
   const courseInfo = useQuery({ queryKey: ['course', course], queryFn: () => get(`/courses/${course}`), enabled: !!course });
-  const uniId = filters.university || courseInfo.data?.university.id || user?.universityId || activeUnis[0]?.id;
+  const uniId = filters.university || courseInfo.data?.university.id || user?.universityId || defaultUniversity(activeUnis)?.id;
   const majors = useQuery({
     queryKey: ['majors', uniId],
     queryFn: () => get(`/universities/${uniId}/majors`, { sort: 'name' }),
