@@ -1,6 +1,6 @@
 # CourseLens
 
-**Know the course before you register.** CourseLens lets university students rate and discuss **courses, not instructors**: end-of-course reviews, mid-semester ratings, course-combination advice ("take before", "pairs well", "avoid together") and a searchable library of student notes, study guides, tips and formula sheets. It starts with universities in Bahrain (American University of Bahrain).
+**Know the course before you register.** CourseLens lets university students rate and discuss **courses, not instructors**: end-of-course reviews, mid-semester ratings, course-combination advice ("take before", "pairs well", "avoid together") and a searchable library of student notes, study guides, tips and formula sheets. It launches with four universities in Bahrain: the American University of Bahrain, the University of Bahrain, Bahrain Polytechnic and Ahlia University.
 
 COSC 484 / 484L Web Engineering project by **Renad Ibrahim (A00848)** and **Talal AlHamer (A01163)**.
 
@@ -10,15 +10,16 @@ COSC 484 / 484L Web Engineering project by **Renad Ibrahim (A00848)** and **Tala
 
 1. [Quick start](#quick-start)
 2. [Demo accounts](#demo-accounts)
-3. [Tech stack](#tech-stack)
-4. [Architecture](#architecture)
-5. [Project structure](#project-structure)
-6. [Requirements traceability](#requirements-traceability)
-7. [Security](#security)
-8. [Testing and quality](#testing-and-quality)
-9. [Deployment](#deployment)
-10. [Maintenance](#maintenance)
-11. [API reference](#api-reference)
+3. [Seeded catalog](#seeded-catalog)
+4. [Tech stack](#tech-stack)
+5. [Architecture](#architecture)
+6. [Project structure](#project-structure)
+7. [Requirements traceability](#requirements-traceability)
+8. [Security](#security)
+9. [Testing and quality](#testing-and-quality)
+10. [Deployment](#deployment)
+11. [Maintenance](#maintenance)
+12. [API reference](#api-reference)
 
 ---
 
@@ -62,6 +63,19 @@ All seeded accounts use the password **`CourseLens1`**.
 | `s001@aubh.edu.bh` … `s080@aubh.edu.bh` | Students | Extra reviewers used by the seed data |
 
 Sign up with any new `@aubh.edu.bh` address to try the registration and verification flow.
+
+## Seeded catalog
+
+`npm run seed` loads four real Bahraini universities, each with four majors. Course codes and titles come from each university's published study plans; the sources are listed in `server/src/seed/catalog.js`.
+
+| University | Majors | Courses |
+| --- | --- | --- |
+| American University of Bahrain (AUBH) | Computer Science, Computer Engineering, Business Administration (Management), Business Administration (Finance) | 36 |
+| University of Bahrain (UOB) | Computer Science, Computer Engineering, Accounting, Banking and Finance | 24 |
+| Bahrain Polytechnic | ICT: Programming, Networking, Management Information Systems, Cyber Security | 23 |
+| Ahlia University | Information Technology, Computer and Communications Engineering, Multimedia Systems, Interior Design | 28 |
+
+The demo accounts, reviews, mid-semester ratings and resources belong to AUBH. The other three universities have their full catalog and are open for sign-up with their student email domains.
 
 ## Tech stack
 
@@ -134,7 +148,7 @@ courselens/
 │   │   ├── middleware/         auth, validate (Zod), sanitize, rate limits, upload checks, errors
 │   │   ├── routes/             auth, catalog, courses, resources, interactions, me, moderation, admin, search
 │   │   ├── services/           ratings, content check, storage, email, audit, serializers
-│   │   └── seed/               seed script + sample PDF/DOCX/PNG generators
+│   │   └── seed/               seed script, real university catalog, sample PDF/DOCX/PNG generators
 │   └── tests/                  Jest unit + Supertest integration tests
 ├── render.yaml                 Render blueprint for the API
 └── .github/workflows/ci.yml    lint, tests, build, e2e on every push / PR
@@ -204,14 +218,14 @@ Audit results (Lighthouse, axe, responsive checks) are recorded in [docs/QUALITY
 
 ## Deployment
 
-Planned public URL: **https://courselens-gamma.vercel.app** (frontend) with the API on Render.
+Live at **https://courselens-gamma.vercel.app** (frontend), with the API on Render.
 
 1. **MongoDB Atlas** – create a free M0 cluster, a database user with read/write on one database, and allow Render's outbound IPs (or `0.0.0.0/0` for the free tier). Copy the connection string.
 2. **Render (API)** – *New → Blueprint* and select this repository; `render.yaml` creates `courselens-api` from `/server`. Enter `MONGODB_URI` (and optionally `RESEND_API_KEY`, `EMAIL_FROM`, `CLOUDINARY_URL`). JWT secrets are generated automatically. The demo data is loaded automatically on first start (see step 6).
 3. **Vercel (client)** – import the repository with **Root Directory `client`**. If your Render URL differs from `https://courselens-api.onrender.com`, update the `/api` rewrite in `client/vercel.json`. Set `CLIENT_URL` on Render to the final Vercel URL.
 4. **Email (optional)** – verify a sending domain in Resend and set `RESEND_API_KEY` and `EMAIL_FROM`. Without it, production sign-ups cannot receive verification emails, so set it before the demo.
 5. **Files** – in production uploads are stored in MongoDB GridFS by default, so they survive Render restarts (its free disk is wiped). Set `CLOUDINARY_URL` to use Cloudinary instead.
-6. **First start** – with `SEED_IF_EMPTY=true` (set in `render.yaml`) the API loads the AUBH catalog and demo data the first time it starts on an empty database, and never again once data exists.
+6. **First start** – with `SEED_IF_EMPTY=true` (set in `render.yaml`) the API loads the four-university catalog and the demo data the first time it starts on an empty database, and never again once data exists.
 
 GitHub Actions runs lint, unit/integration tests, the build and the Playwright suite on every push and pull request; Vercel and Render deploy `main` automatically.
 
@@ -226,29 +240,29 @@ GitHub Actions runs lint, unit/integration tests, the build and the Playwright s
 
 ## API reference
 
-All endpoints are under `/api`. 🔒 = log-in required, 🛡 = moderator/admin, 👑 = admin.
+All endpoints are under `/api`. Access: **Public** = anyone, **User** = logged in, **Moderator** = moderator or admin, **Admin** = admin only.
 
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| GET | `/auth/email-domain?email=` | University + majors for an email domain |
-| POST | `/auth/register`, `/auth/verify`, `/auth/resend-verification` | Sign-up and email verification |
-| POST | `/auth/login`, `/auth/refresh`, `/auth/logout` | Sessions |
-| GET | `/auth/me` | Current user (or `null`) |
-| POST | `/auth/forgot-password`, `/auth/reset-password` | Password reset |
-| GET | `/universities`, `/universities/:id`, `/universities/:id/majors`, `/universities/:id/courses` | Catalog |
-| GET | `/majors/:id`, `/majors/:id/courses?q&level&sort&page` | Courses of a major |
-| GET | `/courses/top`, `/courses/lookup`, `/courses/:id` | Home page, autocomplete, course page |
-| GET / POST🔒 | `/courses/:id/reviews` | List (filter by semester/stars, sort) / post review |
-| GET / POST🔒 | `/courses/:id/midterms` | Mid-semester ratings |
-| GET | `/courses/:id/combos` | Course combinations |
-| GET / PATCH / DELETE 🔒 | `/reviews/:id`, `/midterms/:id` | Own content |
-| GET / POST🔒 | `/resources` | Search & filter / upload (multipart) |
-| GET / PATCH🔒 / DELETE🔒 | `/resources/:id` | Detail / edit / delete |
-| GET 🔒 | `/resources/:id/file?disposition=` | Signed download or preview link |
-| POST 🔒 | `/votes`, `/bookmarks`, `/reports` | Helpful (toggle), bookmark (toggle), report |
-| POST 🔒 | `/suggestions/course`, `/suggestions/university`, `/universities/:id/notify` | Suggestions |
-| GET | `/search?q=` | Header search |
-| GET / PATCH / DELETE 🔒 | `/me`, `/me/summary`, `/me/reviews`, `/me/uploads`, `/me/bookmarks`, `/me/password` | Profile |
-| GET 🛡 | `/moderation/queue`, `/moderation/cases/:id`, `/moderation/log`, `/moderation/log.csv` | Moderation |
-| POST 🛡 | `/moderation/cases/:id/decision` | Hide / dismiss / restore with a note |
-| 👑 | `/admin/universities`, `/admin/majors`, `/admin/courses`, `/admin/suggestions`, `/admin/users`, `/admin/stats`, `/admin/audit` | Admin console |
+| Method | Endpoint | Purpose | Access |
+| --- | --- | --- | --- |
+| GET | `/auth/email-domain?email=` | University + majors for an email domain | Public |
+| POST | `/auth/register`, `/auth/verify`, `/auth/resend-verification` | Sign-up and email verification | Public |
+| POST | `/auth/login`, `/auth/refresh`, `/auth/logout` | Sessions | Public |
+| GET | `/auth/me` | Current user (or `null`) | Public |
+| POST | `/auth/forgot-password`, `/auth/reset-password` | Password reset | Public |
+| GET | `/universities`, `/universities/:id`, `/universities/:id/majors`, `/universities/:id/courses` | Catalog | Public |
+| GET | `/majors/:id`, `/majors/:id/courses?q&level&sort&page` | Courses of a major | Public |
+| GET | `/courses/top`, `/courses/lookup`, `/courses/:id` | Home page, autocomplete, course page | Public |
+| GET / POST | `/courses/:id/reviews` | List (filter by semester/stars, sort) / post review | Public (GET), User (POST) |
+| GET / POST | `/courses/:id/midterms` | Mid-semester ratings | Public (GET), User (POST) |
+| GET | `/courses/:id/combos` | Course combinations | Public |
+| GET / PATCH / DELETE | `/reviews/:id`, `/midterms/:id` | Own content | User |
+| GET / POST | `/resources` | Search & filter / upload (multipart) | Public (GET), User (POST) |
+| GET / PATCH / DELETE | `/resources/:id` | Detail / edit / delete | Public (GET), User (PATCH, DELETE) |
+| GET | `/resources/:id/file?disposition=` | Signed download or preview link | User |
+| POST | `/votes`, `/bookmarks`, `/reports` | Helpful (toggle), bookmark (toggle), report | User |
+| POST | `/suggestions/course`, `/suggestions/university`, `/universities/:id/notify` | Suggestions | User |
+| GET | `/search?q=` | Header search | Public |
+| GET / PATCH / DELETE | `/me`, `/me/summary`, `/me/reviews`, `/me/uploads`, `/me/bookmarks`, `/me/password` | Profile | User |
+| GET | `/moderation/queue`, `/moderation/cases/:id`, `/moderation/log`, `/moderation/log.csv` | Moderation | Moderator |
+| POST | `/moderation/cases/:id/decision` | Hide / dismiss / restore with a note | Moderator |
+| All | `/admin/universities`, `/admin/majors`, `/admin/courses`, `/admin/suggestions`, `/admin/users`, `/admin/stats`, `/admin/audit` | Admin console | Admin |
